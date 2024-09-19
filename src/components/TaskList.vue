@@ -15,87 +15,63 @@
       </button>
       <button @click="toggleCompleted">Show completed</button>
     </div>
+
     <ul v-if="!showCompleted" class="flex flex-col justify-start">
-      <li v-for="task in tasks" :key="task.id">
-        <TaskItem :task="task" />
+      <li v-for="task in store.tasks" :key="task.id">
+        <TaskItem
+          :task="task"
+          @toggle="toggleTask(task.id)"
+          @remove="removeTask(task.id)"
+        />
       </li>
     </ul>
 
     <ul v-if="showCompleted" class="flex flex-col justify-start">
       <li v-for="task in completedTasks" :key="task.id">
-        <TaskItem :task="task" />
+        <TaskItem
+          :task="task"
+          @toggle="toggleTask(task.id)"
+          @remove="removeTask(task.id)"
+        />
       </li>
     </ul>
   </div>
 </template>
 
-<!-- <script>
-import { mapGetters, mapActions } from "vuex"
-import TaskItem from "./TaskItem.vue"
-let id = 1
-
-export default {
-  components: { TaskItem },
-  data() {
-    return {
-      newTask: "",
-      showCompleted: false,
-    }
-  },
-  computed: {
-    ...mapGetters(["tasks"]),
-  },
-  methods: {
-    ...mapActions(["addTask"]),
-    handleAddTask() {
-      if (this.newTask.trim()) {
-        const task = {
-          id: id++,
-          text: this.newTask,
-          completed: false,
-        }
-        this.addTask(task)
-        this.newTask = ""
-      }
-    },
-    toggleCompleted() {
-      this.showCompleted = !this.showCompleted
-    },
-  },
-}
-</script> -->
-
 <script>
-import { ref, computed } from "vue"
-import { useStore } from "vuex"
-import TaskItem from "./TaskItem.vue"
-
-let id = 1
+import store from "@/store/index" // Import your custom store
+import { computed, ref } from "vue"
+import TaskItem from "@/components/TaskItem.vue" // Adjust the path as necessary
 
 export default {
-  components: { TaskItem },
-
+  components: {
+    TaskItem, // Register the TaskItem component
+  },
   setup() {
     const newTask = ref("")
     const showCompleted = ref(false)
-
-    const store = useStore()
-
-    const tasks = computed(() => store.getters.tasks)
     const completedTasks = computed(() =>
-      [...store.getters.tasks].filter((task) => task.completed)
+      [...store.tasks].filter((task) => task.completed)
     )
+    let index = 1
 
     const handleAddTask = () => {
       if (newTask.value.trim()) {
-        const task = {
-          id: id++,
+        store.addTask({
+          id: index++,
           text: newTask.value,
           completed: false,
-        }
-        store.dispatch("addTask", task)
-        newTask.value = ""
+        })
+        newTask.value = "" // Clear the input
       }
+    }
+
+    const toggleTask = (taskId) => {
+      store.toggleTaskCompleted(taskId)
+    }
+
+    const removeTask = (taskId) => {
+      store.removeTask(taskId)
     }
 
     const toggleCompleted = () => {
@@ -104,11 +80,13 @@ export default {
 
     return {
       newTask,
+      store,
       showCompleted,
-      tasks,
       handleAddTask,
-      toggleCompleted,
+      toggleTask,
+      removeTask,
       completedTasks,
+      toggleCompleted,
     }
   },
 }
